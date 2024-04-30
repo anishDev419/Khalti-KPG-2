@@ -36,7 +36,7 @@ class Submit(FormView):
             # GENERATING KHALTI'S PAYLOAD
 
             # GET REQUEST URL
-            url = config('khalti_url')
+            url = config('khalti_url') + "epayment/initiate/"
 
             # GET IMAGIO CREATIONS WEBSITE URL
             website_url = config('imagio_website_url')
