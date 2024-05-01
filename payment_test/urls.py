@@ -21,4 +21,5 @@ import khalti
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('khalti/', include('khalti.urls')),
+    path('connectips/', include('connectips.urls')),
 ]

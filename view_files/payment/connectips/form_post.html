@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>FORM POSTING TO CONNECT IPS</title>
+</head>
+<body>
+
+
+    <form id="submitForm" action="https://uat.connectips.com:7443/connectipswebgw/loginpage" method="POST">
+        <input type="hidden" name="MERCHANTID" value="{{ form_data.MERCHANTID }}">
+        <input type="hidden" name="APPID" value="{{ form_data.APPID }}">
+        <input type="hidden" name="APPNAME" value="{{ form_data.APPNAME }}">
+        <input type="hidden" name="TXNID" value="{{ form_data.TXNID }}">
+        <input type="hidden" name="TXNDATE" value="{{ form_data.TXNDATE }}">
+        <input type="hidden" name="TXNCRNCY" value="{{ form_data.TXNCRNCY }}">
+        <input type="hidden" name="TXNAMT" value="{{ form_data.TXNAMT }}">
+        <input type="hidden" name="REFERENCEID" value="{{ form_data.REFERENCEID }}">
+        <input type="hidden" name="REMARKS" value="{{ form_data.REMARKS }}">
+        <input type="hidden" name="PARTICULARS" value="{{ form_data.PARTICULARS }}">
+        <input type="hidden" name="TOKEN" value="{{ form_data.TOKEN }}">
+    </form>
+    <script>
+        document.getElementById("submitForm").submit();
+    </script>
+
+</body>
+</html>
