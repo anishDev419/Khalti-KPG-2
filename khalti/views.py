@@ -60,10 +60,10 @@ class Submit(FormView):
             purchase_order_name = "instance_" + timestamp_str
             purchase_order_id = "instance_renew_id_" + timestamp_str
 
-            # GENERATE SECRET KEY FORMAT
             auth_key = "Key " + config('khalti_key')
             payload = {
                 "return_url": return_url,
+            # GENERATE SECRET KEY FORMAT
                 "website_url": website_url,
                 "amount": amount,
                 "purchase_order_id": purchase_order_id,

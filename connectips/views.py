@@ -1,7 +1,9 @@
 import base64
 import hashlib
 
+import requests
 from django.shortcuts import render
+from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import TemplateView, FormView
 from decouple import config
 
@@ -39,7 +41,7 @@ class Submit(FormView):
             merchant_id = config('connect_merchant_id')
             app_id = config('connect_app_id')
             app_name = config('connect_app_name')
-            url = config('connect_url')
+            url = config('connect_url') + "/loginpage"
 
             # FIX KEY FORMAT
             env_key = config('CONNECT_PRIVATE_KEY')
@@ -110,3 +112,102 @@ class SuccessForm(TemplateView):
         context = super().get_context_data(*args, **kwargs)
         context['message'] = 'Hello World!'
         return context
+
+
+@csrf_exempt
+def ConnectSuccessReturn(request):
+    if request.method == 'GET':
+        txn_id = request.GET.get('TXNID')
+
+        if txn_id:
+            url = config('connect_url') + "/api/creditor/validatetxn"
+
+            # FETCHING MERCHANT DATA
+
+            merchant_id = config('connect_merchant_id')
+            app_id = config('connect_app_id')
+            password = config('password')
+
+            # GET AMOUNT FROM DB [INVOICE]
+            txn_amt = 100
+
+            # FIX KEY FORMAT
+            env_key = config('CONNECT_PRIVATE_KEY')
+            format_key = env_key.replace('\\n', '\n')
+
+            # Prepare data for POST request
+            data = {
+                'MERCHANTID': merchant_id,
+                'APPID': app_id,
+                'REFERENCEID': txn_id,
+                'TXNAMT': txn_amt,
+            }
+
+            auth_string = f"{app_id}:{password}"
+
+            encoded_auth_string = base64.b64encode(auth_string.encode()).decode()
+            print(encoded_auth_string)
+
+            headers = {
+                'Authorization': f'Basic {encoded_auth_string}',
+                'Content-Type': 'application/json',
+            }
+
+            print('data without token: ', data)
+
+            # FORMAT PLAINTEXT DATA
+            plaintext_data = ", ".join([f"{key}={value}" for key, value in data.items()]) + ", TOKEN=TOKEN"
+
+            # Hash the message using SHA256
+            hash_object = hashlib.sha256()
+            hash_object.update(plaintext_data.encode())
+            hash_object.update(format_key.encode())
+            hashed_message = hash_object.hexdigest()
+
+            # base64 FORMATTING AND APPENDING TO DATA
+            decoded_bytes = bytes.fromhex(hashed_message)
+            encoded_base64 = base64.b64encode(decoded_bytes).decode()
+            data['TOKEN'] = encoded_base64
+
+            # DATA HANDLING VERIFICATION OF TRANSACTION
+            print("Completed")
+
+            response = requests.post(url, headers=headers, json=data)
+            res_json = response.json()
+
+            if response.status_code == 200:
+                if 'status' in res_json:
+                    status = res_json.get('status')
+                    if status and status == "SUCCESS":
+                        # HANDLE SUCCESS CASE
+                        return render(request, 'payment/connect/txn_success.html')
+
+                    else:
+                        # HANDLE ERROR
+                        return render(request, 'payment/connect/txn_failed.html')
+
+                else:
+                    # HANDLE ERROR
+                    return render(request, 'payment/connect/txn_failed.html')
+
+            else:
+                # HANDLE ERROR
+                return render(request, 'payment/connect/txn_failed.html')
+
+        else:
+            # HANDLE ERROR
+            return render(request, 'payment/connect/txn_failed.html')
+            pass
+
+    else:
+        # HANDLE ERROR
+        return render(request, 'payment/connect/txn_failed.html')
+
+@csrf_exempt
+def ConnectFailedReturn(request):
+    if request.method == 'GET':
+        # HANDLE ERROR
+        return render(request, 'payment/connect/txn_failed.html')
+    else:
+        # HANDLE ERROR
+        return render(request, 'payment/connect/txn_failed.html')
