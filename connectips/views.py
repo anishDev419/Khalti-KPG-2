@@ -79,7 +79,6 @@ class Submit(FormView):
 
             # FORMAT PLAINTEXT DATA
             plaintext_data = ','.join([f"{key.strip()}={str(value).strip()}" for key, value in data.items()])
-            print(plaintext_data)
 
             # Convert private key string to private key object
             private_key = serialization.load_pem_private_key(
@@ -102,8 +101,6 @@ class Submit(FormView):
 
             data['url'] = url
             data['TOKEN'] = signature_base64
-
-            print('data', data)
 
             # FORM POST
             return render(self.request, 'payment/connectips/form_post.html', {'form_data': data})
@@ -191,24 +188,30 @@ def ConnectSuccessReturn(request):
                 'Content-Type': 'application/json',
             }
 
-            print('data without token: ', data)
-
             # FORMAT PLAINTEXT DATA
-            plaintext_data = ", ".join([f"{key}={value}" for key, value in data.items()]) + ", TOKEN=TOKEN"
+            plaintext_data = ','.join([f"{key.strip()}={str(value).strip()}" for key, value in data.items()])
 
-            # Hash the message using SHA256
-            hash_object = hashlib.sha256()
-            hash_object.update(plaintext_data.encode())
-            hash_object.update(format_key.encode())
-            hashed_message = hash_object.hexdigest()
+            # Convert private key string to private key object
+            private_key = serialization.load_pem_private_key(
+                format_key.encode(),
+                password=None,
+                backend=default_backend()
+            )
 
-            # base64 FORMATTING AND APPENDING TO DATA
-            decoded_bytes = bytes.fromhex(hashed_message)
-            encoded_base64 = base64.b64encode(decoded_bytes).decode()
-            data['TOKEN'] = encoded_base64
+            plaintext = plaintext_data.encode()
 
-            # DATA HANDLING VERIFICATION OF TRANSACTION
-            print("Completed")
+            # Sign the data using RSA with SHA-256
+            signature = private_key.sign(
+                plaintext,
+                padding.PKCS1v15(),
+                hashes.SHA256()
+            )
+
+            # Convert the signature bytes to base64
+            signature_base64 = base64.b64encode(signature).decode()
+
+            data['url'] = url
+            data['TOKEN'] = signature_base64
 
             response = requests.post(url, headers=headers, json=data)
             res_json = response.json()
