@@ -1,7 +1,10 @@
 import base64
 import hashlib
+from datetime import datetime
 
 import requests
+from cryptography.hazmat.primitives.serialization import pkcs12
+from cryptography.hazmat.primitives.serialization.pkcs12 import load_pkcs12
 from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import TemplateView, FormView
@@ -9,6 +12,12 @@ from decouple import config
 
 from django.utils import timezone
 from connectips.forms import ConnectForm
+
+from cryptography.hazmat.primitives import serialization, hashes
+from cryptography.hazmat.primitives.asymmetric import padding, utils
+from cryptography.hazmat.backends import default_backend
+
+from OpenSSL import crypto
 
 
 class Index(TemplateView):
@@ -44,13 +53,12 @@ class Submit(FormView):
             url = config('connect_url') + "/loginpage"
 
             # FIX KEY FORMAT
-            env_key = config('CONNECT_PRIVATE_KEY')
-            format_key = env_key.replace('\\n', '\n')
+            format_key = generate_hash()
 
             # GENERATE TXN ID
-            current_time = timezone.now()
-            timestamp_str = current_time.strftime("%Y%m%d%H%M%S%f")
-            txn_id = f'{timestamp_str}_{app_id}'
+            current_time = datetime.now()
+            # Combine components to form the transaction ID
+            txn_id = f"TXN7_IMAGIO"
 
             txn_date = current_time.strftime("%d-%m-%Y")
 
@@ -69,23 +77,33 @@ class Submit(FormView):
                 'TOKEN': 'TOKEN'
             }
 
-            print('data without token: ', data)
-
             # FORMAT PLAINTEXT DATA
-            plaintext_data = ", ".join([f"{key}={value}" for key, value in data.items()]) + ", TOKEN=TOKEN"
+            plaintext_data = ','.join([f"{key.strip()}={str(value).strip()}" for key, value in data.items()])
+            print(plaintext_data)
 
-            # Hash the message using SHA256
-            hash_object = hashlib.sha256()
-            hash_object.update(plaintext_data.encode())
-            hash_object.update(format_key.encode())
-            hashed_message = hash_object.hexdigest()
+            # Convert private key string to private key object
+            private_key = serialization.load_pem_private_key(
+                format_key.encode(),
+                password=None,
+                backend=default_backend()
+            )
 
-            # base64 FORMATTING AND APPENDING TO DATA
-            decoded_bytes = bytes.fromhex(hashed_message)
-            encoded_base64 = base64.b64encode(decoded_bytes).decode()
-            data['TOKEN'] = encoded_base64
+            plaintext = plaintext_data.encode()
 
-            print('form post data', data)
+            # Sign the data using RSA with SHA-256
+            signature = private_key.sign(
+                plaintext,
+                padding.PKCS1v15(),
+                hashes.SHA256()
+            )
+
+            # Convert the signature bytes to base64
+            signature_base64 = base64.b64encode(signature).decode()
+
+            data['url'] = url
+            data['TOKEN'] = signature_base64
+
+            print('data', data)
 
             # FORM POST
             return render(self.request, 'payment/connectips/form_post.html', {'form_data': data})
@@ -93,6 +111,26 @@ class Submit(FormView):
         except Exception as e:
             print(e)
             return super().form_invalid(form)
+
+
+def generate_hash():
+    # Load the PKCS#12 file
+    with open("CREDITOR.pfx", "rb") as f:
+        private_key, certificate, additional_certificates = pkcs12.load_key_and_certificates(f.read(), b"123")
+
+    # Convert private key to PEM format
+    private_key_pem = private_key.private_bytes(
+        encoding=serialization.Encoding.PEM,
+        format=serialization.PrivateFormat.PKCS8,
+        encryption_algorithm=serialization.NoEncryption()
+    ).decode('utf-8')
+
+    # Convert certificate to PEM format
+    certificate_pem = certificate.public_bytes(
+        encoding=serialization.Encoding.PEM
+    ).decode('utf-8')
+
+    return private_key_pem
 
 
 class FormRedirect(TemplateView):
@@ -202,6 +240,7 @@ def ConnectSuccessReturn(request):
     else:
         # HANDLE ERROR
         return render(request, 'payment/connect/txn_failed.html')
+
 
 @csrf_exempt
 def ConnectFailedReturn(request):
