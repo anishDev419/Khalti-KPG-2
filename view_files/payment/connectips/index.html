@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Connect IPS Payment</title>
+  {% load static %}
+  {% load bootstrap5 %}
+  {% bootstrap_css %}
+  {% bootstrap_javascript %}
+</head>
+
+<style>
+
+    #submit-button{
+        background-color: #5E338D;
+    }
+
+    .form-group{
+        margin-bottom: 15px;
+    }
+
+    #logo{
+        width: 25%;
+    }
+</style>
+<body>
+
+<div class="container" >
+
+    <div class="title my-5" >
+        <p>Connect IPS GATEWAY</p>
+    </div>
+
+
+    <div class="payment-form" >
+
+        <div class="img-container d-flex justify-content-around" >
+            <img id="logo" src="{% static 'connectips/connect_logo.png' %}" alt="ConnectIPS Logo">
+        </div>
+
+        <form id="connectips-form" action="{% url 'submit-connectips' %}" method="POST">
+            {% csrf_token %}
+            <!-- TXNCRNCY -->
+            <div class="form-group">
+                <label for="txn-currency">Transaction Currency:</label>
+                <input type="text" class="form-control" id="txn-currency" name="TXNCRNCY" required maxlength="3">
+            </div>
+
+            <!-- TXNAMT -->
+            <div class="form-group">
+                <label for="txn-amount">Amount:</label>
+                <input type="number" class="form-control" id="txn-amount" name="TXNAMT" required maxlength="20">
+            </div>
+
+            <!-- REMARKS -->
+            <div class="form-group">
+                <label for="remarks">Remarks:</label>
+                <input type="text" class="form-control" id="remarks" name="REMARKS" required maxlength="50">
+            </div>
+
+            <!-- Submit Button -->
+            <button type="submit" class="btn btn-primary">Submit</button>
+        </form>
+    </div>
+
+
+</div>
+
+
+
+<script>
+
+</script>
+
+</body>
+</html>

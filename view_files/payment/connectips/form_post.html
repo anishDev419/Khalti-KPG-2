@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>FORM POSTING TO CONNECT IPS</title>
+</head>
+<body>
+
+
+    <form id="submitForm" action="{{ form_data.url }}"  method="POST">
+        <input type="hidden" id="MERCHANTID" name="MERCHANTID" value="{{ form_data.MERCHANTID }}">
+        <input type="hidden" id="APPID" name="APPID" value="{{ form_data.APPID }}">
+        <input type="hidden" id="APPNAME" name="APPNAME" value="{{ form_data.APPNAME }}">
+        <input type="hidden" id="TXNID" name="TXNID" value="{{ form_data.TXNID }}">
+        <input type="hidden" id="TXNDATE" name="TXNDATE" value="{{ form_data.TXNDATE }}">
+        <input type="hidden" id="TXNCRNCY" name="TXNCRNCY" value="{{ form_data.TXNCRNCY }}">
+        <input type="hidden" id="TXNAMT" name="TXNAMT" value="{{ form_data.TXNAMT }}">
+        <input type="hidden" id="REFERENCEID" name="REFERENCEID" value="{{ form_data.REFERENCEID }}">
+        <input type="hidden" id="REMARKS" name="REMARKS" value="{{ form_data.REMARKS }}">
+        <input type="hidden" id="PARTICULARS" name="PARTICULARS" value="{{ form_data.PARTICULARS }}">
+        <input type="hidden" id="TOKEN" name="TOKEN" value="{{ form_data.TOKEN }}">
+    </form>
+
+
+    <script>
+        document.getElementById("submitForm").submit();
+    </script>
+
+</body>
+</html>

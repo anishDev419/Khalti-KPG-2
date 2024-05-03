@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Khalti Payment</title>
+  {% load static %}
+  {% load bootstrap5 %}
+  {% bootstrap_css %}
+  {% bootstrap_javascript %}
+</head>
+
+<style>
+
+    #submit-button{
+        background-color: #5E338D;
+    }
+
+</style>
+<body>
+
+<div class="container" >
+
+    <div class="title my-5" >
+        <p>Khalti GATEWAY</p>
+    </div>
+
+
+    <div class="payment-form" >
+
+        <div class="img-container d-flex justify-content-around" >
+            <img src="{% static 'khalti/khalti_icon.jpg' %}" alt="Khalti Logo">
+        </div>
+
+
+            <form method="post" action="{% url 'submit-khalti' %}" >
+            {% csrf_token %}
+              <div class="form-group">
+                <label for="amount">Amount</label>
+                <input type="text" class="form-control my-2" name="amount" id="amount" placeholder="Enter Amount in ₹">
+              </div>
+
+                <button id="submit-button" type="submit" class="btn btn-primary my-4">Submit</button>
+
+        </form>
+
+
+
+<p><button onclick="dummyPay()" id="payment-button" style="background-color: #5C2D91; cursor: pointer; color: #fff; border: none; padding: 5px 10px; border-radius: 2px">Pay with Khalti</button></p>
+
+    </div>
+
+
+</div>
+
+
+
+<script>
+    function dummyPay() {
+        var myHeaders = new Headers();
+        myHeaders.append("Authorization", "key live_secret_key_68791341fdd94846a146f0457ff7b455");
+        myHeaders.append("Content-Type", "application/json");
+
+        var raw = JSON.stringify({
+        "return_url": "https://docs.khalti.com/khalti-epayment/",
+        "website_url": "https://example.com/",
+        "amount": "1000",
+        "purchase_order_id": "Order01",
+        "modes":["KHALTI"],
+        "purchase_order_name": "test",
+        "customer_info": {
+            "name": "Test Bahadur",
+            "email": "test@khalti.com",
+            "phone": "9800000001"
+        }
+        });
+
+        var requestOptions = {
+            method: 'POST',
+            headers: myHeaders,
+            body: raw,
+            redirect: 'follow'
+        };
+
+        fetch("https://a.khalti.com/api/v2/epayment/initiate/", requestOptions)
+        .then(result => result.json())
+        .then(json => window.open(json.payment_url, '_blank'))
+        .catch(error => console.log('error', error));
+    }
+</script>
+
+</body>
+</html>
