@@ -55,10 +55,10 @@ class Submit(FormView):
             # FIX KEY FORMAT
             format_key = generate_hash()
 
-            # GENERATE TXN ID
+            # GENERATE UNIQUE TXN ID
             current_time = datetime.now()
-            # Combine components to form the transaction ID
-            txn_id = f"TXN7_IMAGIO"
+            unique_number = current_time.strftime("%m%d%M%S%f")
+            txn_id = f"{unique_number}_IMG"
 
             txn_date = current_time.strftime("%d-%m-%Y")
 
